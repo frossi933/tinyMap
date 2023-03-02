@@ -1,15 +1,14 @@
 package coding.tiny.map.http.routes
 
-import eu.timepit.refined.types.string.NonEmptyString
+import coding.tiny.map.model.tinyMap.TinyMapId
+import eu.timepit.refined.refineV
+import eu.timepit.refined.string.Uuid
 
 object Vars {
 
-  object NonEmptyStringVar {
-    def unapply(str: String): Option[NonEmptyString] = {
-      if (str.nonEmpty)
-        NonEmptyString.from(str).toOption
-      else
-        None
+  object TinyMapIdVar {
+    def unapply(str: String): Option[TinyMapId] = {
+      refineV[Uuid](str).toOption.map(TinyMapId(_))
     }
   }
 }

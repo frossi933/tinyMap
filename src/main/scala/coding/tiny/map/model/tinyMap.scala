@@ -6,6 +6,8 @@ import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.collections.{Graph, UndiGraphHMap}
 import coding.tiny.map.http.Requests.TinyMapCityConnections
 import coding.tiny.map.model.tinyMap.Road.toEdge
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.string.Uuid
 import eu.timepit.refined.types.numeric.{NonNegDouble, PosDouble}
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.generic.JsonCodec
@@ -14,6 +16,8 @@ import io.estatico.newtype.macros.newtype
 import org.http4s.{EntityDecoder, EntityEncoder}
 import org.http4s.circe.{jsonEncoderOf, jsonOf}
 import io.circe.refined._
+
+import java.util.UUID
 
 object tinyMap {
 
@@ -44,12 +48,14 @@ object tinyMap {
     def toEdge(road: Road): Edge[City, Distance] = Edge(road.from, road.to, road.distance)
   }
 
-  @newtype case class TinyMapName(name: NonEmptyString)
-  object TinyMapName {
+  @newtype case class TinyMapId(id: String Refined Uuid)
+  object TinyMapId {
 
-    implicit val tmapNameDecoder: Decoder[TinyMapName]                      = deriving
-    implicit val tmapNameEncoder: Encoder[TinyMapName]                      = deriving
-    implicit def tmapNameEntityEncoder[F[_]]: EntityEncoder[F, TinyMapName] = jsonEncoderOf
+    def fromUUID(uuid: UUID): TinyMapId = TinyMapId(Refined.unsafeApply(uuid.toString))
+
+    implicit val tmapNameDecoder: Decoder[TinyMapId]                      = deriving
+    implicit val tmapNameEncoder: Encoder[TinyMapId]                      = deriving
+    implicit def tmapNameEntityEncoder[F[_]]: EntityEncoder[F, TinyMapId] = jsonEncoderOf
 
   }
 
@@ -68,6 +74,7 @@ object tinyMap {
     )
 
     def shortestDistance(c1: City, c2: City): Distance = graph.shortestDistance(c1, c2)
+
   }
 
   object TinyMap {
