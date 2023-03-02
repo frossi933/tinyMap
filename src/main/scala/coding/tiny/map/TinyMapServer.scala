@@ -1,26 +1,31 @@
 package coding.tiny.map
 
+import cats.Applicative
+
 import scala.concurrent.ExecutionContext.global
-import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, Timer}
-import coding.tiny.map.http.routes.MapRoutes
-import coding.tiny.map.repositories.MapsRepositoryDB
+import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, Timer}
+import coding.tiny.map.http.routes.TinyMapRoutes
+import coding.tiny.map.repositories.{
+  TinyMapsRepositoryDB,
+  TinyMapsRepositoryRedis,
+  RedisJsonCodecInstances
+}
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
-import cats.syntax._
-import cats.effect.syntax._
 import cats.implicits._
-import coding.tiny.map.services.LiveMapsService
+import coding.tiny.map.services.LiveTinyMapsService
+import dev.profunktor.redis4cats.effect.{Log => R4CLogger}
 
 object TinyMapServer {
 
-  def stream[F[_]: ConcurrentEffect: ContextShift](implicit
+  def stream[F[_]: ConcurrentEffect: ContextShift: R4CLogger: Applicative](implicit
       T: Timer[F]
   ): F[fs2.Stream[F, ExitCode]] = {
     for {
-      mapsRepo    <- MapsRepositoryDB()
-      mapsService <- LiveMapsService(mapsRepo)
-      mapRoutes    = MapRoutes(mapsService).routes
+      mapsRepo    <- TinyMapsRepositoryDB()
+      mapsService <- LiveTinyMapsService(mapsRepo)
+      mapRoutes    = TinyMapRoutes(mapsService).routes
       httpApp      = Router("/" -> mapRoutes).orNotFound
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(httpApp)
     } yield BlazeServerBuilder[F](global)
