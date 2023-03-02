@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec.{circeEntityDecoder, circeEntityEncoder
 import org.http4s.dsl.Http4sDsl
 import coding.tiny.map.model.tinyMap.Distance._
 import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
-import coding.tiny.map.http.Requests.ImplicitCodecs._
+import coding.tiny.map.http.Requests._
 import org.http4s.server.Router
 
 case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {

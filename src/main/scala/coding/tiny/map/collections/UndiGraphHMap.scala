@@ -2,12 +2,7 @@ package coding.tiny.map.collections
 
 import cats.{Eq, Hash, Monoid, Order}
 import cats.implicits._
-import coding.tiny.map.collections
 import coding.tiny.map.collections.Graph.{Adjacency, Edge}
-import coding.tiny.map.model.tinyMap.{City, Distance}
-import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.generic.semiauto.deriveDecoder
-import io.circe.{Decoder, HCursor, KeyDecoder}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.{HashMap, HashSet, TreeSet}

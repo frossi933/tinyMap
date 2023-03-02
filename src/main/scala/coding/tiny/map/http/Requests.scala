@@ -8,13 +8,7 @@ import io.circe.generic.JsonCodec
 object Requests {
 
   case class TinyMapCityConnections(city: City, connections: Map[City, Distance])
-
-  @JsonCodec case class CreateRequest(`map`: Vector[TinyMapCityConnections])
-
-  @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
-
-  object ImplicitCodecs {
-
+  object TinyMapCityConnections {
     implicit val encodeTMapCityConn: Encoder[TinyMapCityConnections] =
       (a: TinyMapCityConnections) =>
         Json.obj(
@@ -40,4 +34,9 @@ object Requests {
     implicit val mapCityDistEncoder: Encoder[Map[City, Distance]] =
       Encoder.encodeMap[City, Distance]
   }
+
+  @JsonCodec case class CreateRequest(`map`: Vector[TinyMapCityConnections])
+
+  @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
+
 }
