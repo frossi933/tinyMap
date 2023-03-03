@@ -4,7 +4,7 @@ import cats.Applicative
 import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, Timer}
 import cats.implicits._
 import coding.tiny.map.http.routes.TinyMapRoutes
-import coding.tiny.map.repositories.TinyMapsRepositoryDB
+import coding.tiny.map.repositories.TinyMapsRepositoryMem
 import coding.tiny.map.services.LiveTinyMapsService
 import dev.profunktor.redis4cats.effect.{Log => R4CLogger}
 import org.http4s.blaze.server.BlazeServerBuilder
@@ -19,7 +19,7 @@ object TinyMapServer {
       T: Timer[F]
   ): F[fs2.Stream[F, ExitCode]] = {
     for {
-      mapsRepo    <- TinyMapsRepositoryDB()
+      mapsRepo    <- TinyMapsRepositoryMem()
       mapsService <- LiveTinyMapsService(mapsRepo)
       mapRoutes    = TinyMapRoutes(mapsService).routes
       httpApp      = Router("/" -> mapRoutes).orNotFound

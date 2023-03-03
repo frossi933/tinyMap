@@ -8,7 +8,7 @@ import coding.tiny.map.model.tinyMap.{TinyMap, TinyMapId}
 import java.util.UUID
 import scala.collection.mutable
 
-class TinyMapsRepositoryDB[F[_]: Applicative] extends TinyMapsRepository[F] {
+class TinyMapsRepositoryMem[F[_]: Applicative] extends TinyMapsRepository[F] {
   var tmaps: mutable.HashMap[TinyMapId, TinyMap] = mutable.HashMap[TinyMapId, TinyMap]()
 
   override def getAll: F[List[TinyMap]] = tmaps.toList.map(_._2).pure[F]
@@ -22,7 +22,7 @@ class TinyMapsRepositoryDB[F[_]: Applicative] extends TinyMapsRepository[F] {
   }
 }
 
-object TinyMapsRepositoryDB {
+object TinyMapsRepositoryMem {
 
-  def apply[F[_]: Sync](): F[TinyMapsRepositoryDB[F]] = new TinyMapsRepositoryDB[F].pure
+  def apply[F[_]: Sync](): F[TinyMapsRepositoryMem[F]] = new TinyMapsRepositoryMem[F].pure
 }
