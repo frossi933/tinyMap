@@ -4,9 +4,6 @@ import cats.Applicative
 import cats.effect.Sync
 import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
 import coding.tiny.map.model.tinyMap.{TinyMap, TinyMapId}
-import eu.timepit.refined.refineV
-import eu.timepit.refined.string.Uuid
-import eu.timepit.refined.types.all.NonEmptyString
 
 import java.util.UUID
 import scala.collection.mutable

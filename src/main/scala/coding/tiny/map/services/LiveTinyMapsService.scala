@@ -3,7 +3,7 @@ package coding.tiny.map.services
 import cats.effect.Sync
 import cats.implicits._
 import coding.tiny.map.http.Requests
-import coding.tiny.map.model.tinyMap.{City, Distance, Road, TinyMap, TinyMapId}
+import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 import coding.tiny.map.repositories.TinyMapsRepository
 import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
 
@@ -19,18 +19,17 @@ class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(impli
     case None       => TinyMapNotFoundException(id).raiseError[F, TinyMap]
   }
 
-  override def update(tmap: TinyMap, cityConnections: Requests.TinyMapCityConnections): F[TinyMap] =
-    ??? // tmap.update
+  override def update(
+      tmap: TinyMap,
+      cityConnections: Requests.CreateOrUpdateRequest
+  ): F[TinyMap] = {
+    tmap.insertOrUpdateEdges(cityConnections.`map`.flatMap(_.toEdges)).pure[F]
+  }
 
   override def delete(
       tmap: TinyMap,
       cityConnections: Requests.TinyMapCityConnections
-  ): F[TinyMap] = {
-    val roads = cityConnections.connections.map { case (city, dist) =>
-      Road(cityConnections.city, city, dist)
-    }.toVector
-    tmap.deleteRoads(roads).pure[F]
-  }
+  ): F[TinyMap] = tmap.removeEdges(cityConnections.toEdges).pure[F]
 
   def shortestDistance(tmap: TinyMap, start: City, end: City): F[Distance] =
     tmap.shortestDistance(start, end).pure[F]

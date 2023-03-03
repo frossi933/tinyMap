@@ -1,21 +1,20 @@
 package coding.tiny.map.model
 
-import cats.{Applicative, Hash, Monoid, Order}
 import cats.implicits.catsSyntaxApplicativeId
+import cats.{Applicative, Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.Edge
-import coding.tiny.map.collections.{Graph, UndiGraphHMap}
+import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.http.Requests.TinyMapCityConnections
-import coding.tiny.map.model.tinyMap.Road.toEdge
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
-import eu.timepit.refined.types.numeric.{NonNegDouble, PosDouble}
+import eu.timepit.refined.types.numeric.NonNegDouble
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe.generic.JsonCodec
-import io.circe.{Decoder, Encoder, HCursor}
-import io.estatico.newtype.macros.newtype
-import org.http4s.{EntityDecoder, EntityEncoder}
-import org.http4s.circe.{jsonEncoderOf, jsonOf}
 import io.circe.refined._
+import io.circe.{Decoder, Encoder}
+import io.estatico.newtype.macros.newtype
+import org.http4s.EntityEncoder
+import org.http4s.circe.jsonEncoderOf
 
 import java.util.UUID
 
@@ -59,23 +58,7 @@ object tinyMap {
 
   }
 
-  final class TinyMap private (val graph: Graph[City, Distance]) {
-
-    def cities: Vector[City] = graph.nodes
-    def roads: Vector[Road]  = graph.edges.map(Road.fromEdge)
-
-    def addCity(city: City): TinyMap                = new TinyMap(graph.insertNode(city))
-    def addRoad(road: Road): TinyMap                = new TinyMap(graph.insertEdge(toEdge(road)))
-    def deleteCity(city: City): TinyMap             = deleteCities(Vector(city))
-    def deleteCities(cities: Vector[City]): TinyMap = new TinyMap(graph.removeNodes(cities))
-    def deleteRoad(road: Road): TinyMap             = deleteRoads(Vector(road))
-    def deleteRoads(roads: Vector[Road]): TinyMap   = new TinyMap(
-      graph.removeEdges(roads.map(toEdge))
-    )
-
-    def shortestDistance(c1: City, c2: City): Distance = graph.shortestDistance(c1, c2)
-
-  }
+  type TinyMap = UndiGraphHMap[City, Distance]
 
   object TinyMap {
 
@@ -83,9 +66,8 @@ object tinyMap {
       val edges: Vector[Edge[City, Distance]] = tmap.flatMap(cc =>
         cc.connections.toVector.map { case (city, dist) => Edge(cc.city, city, dist) }
       )
-      // val a     = HashMap(tmap.map(n => n.city -> n.connections): _*)
 
-      new TinyMap(UndiGraphHMap(edges)).pure
+      UndiGraphHMap(edges).pure[F]
     }
   }
 }

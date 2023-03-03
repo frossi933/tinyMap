@@ -1,24 +1,21 @@
 package coding.tiny.map.http.routes
 
-import cats._
 import cats.effect._
 import cats.implicits._
-import cats.syntax._
 import coding.tiny.map.http.Requests.{
-  CreateRequest,
+  CreateOrUpdateRequest,
   ShortestDistanceRequest,
   TinyMapCityConnections
 }
-import coding.tiny.map.model.tinyMap.{TinyMap, TinyMapId}
 import coding.tiny.map.http.routes.Vars.TinyMapIdVar
+import coding.tiny.map.model.tinyMap.Distance._
+import coding.tiny.map.model.tinyMap.{Road, TinyMap}
 import coding.tiny.map.services.TinyMapsService
-import org.http4s.{HttpRoutes, Response}
+import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
 import org.http4s.circe.CirceEntityCodec.{circeEntityDecoder, circeEntityEncoder}
 import org.http4s.dsl.Http4sDsl
-import coding.tiny.map.model.tinyMap.Distance._
-import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
-import coding.tiny.map.http.Requests._
 import org.http4s.server.Router
+import org.http4s.{HttpRoutes, Response}
 
 case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
 
@@ -30,11 +27,11 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root =>
-      tinyMapsService.getAll.flatMap(ms => Ok(ms.map(_.roads))) // FIXME
+      tinyMapsService.getAll.flatMap(ms => Ok(ms.map(_.edges.map(Road.fromEdge)))) // FIXME
 
     case req @ POST -> Root =>
       val responseF = for {
-        postReqBody <- req.as[CreateRequest]
+        postReqBody <- req.as[CreateOrUpdateRequest]
         tmap        <- TinyMap[F](postReqBody.`map`)
         mapName     <- tinyMapsService.create(tmap)
         response    <- Ok(mapName)
@@ -44,15 +41,15 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
     case GET -> Root / TinyMapIdVar(id) =>
       val responseF = tinyMapsService
         .getById(id)
-        .flatMap(m => Ok(m.roads)) // FIXME
+        .flatMap(m => Ok(m.edges.map(Road.fromEdge))) // FIXME
       recoverExceptions(responseF)
 
     case req @ PUT -> Root / TinyMapIdVar(id) =>
       val responseF = for {
-        updateReqBody <- req.as[TinyMapCityConnections]
+        updateReqBody <- req.as[CreateOrUpdateRequest]
         tmap          <- tinyMapsService.getById(id)
         updated       <- tinyMapsService.update(tmap, updateReqBody)
-        response      <- Ok(updated.roads) // FIXME
+        response      <- Ok(updated.edges.map(Road.fromEdge)) // FIXME
       } yield response
       recoverExceptions(responseF)
 
@@ -61,7 +58,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
         deleteReqBody <- req.as[TinyMapCityConnections]
         tmap          <- tinyMapsService.getById(id)
         updated       <- tinyMapsService.delete(tmap, deleteReqBody)
-        response      <- Ok(updated.roads) // FIXME
+        response      <- Ok(updated.edges.map(Road.fromEdge)) // FIXME
       } yield response
       recoverExceptions(responseF)
 

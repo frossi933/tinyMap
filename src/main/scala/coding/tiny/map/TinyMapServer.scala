@@ -1,21 +1,17 @@
 package coding.tiny.map
 
 import cats.Applicative
-
-import scala.concurrent.ExecutionContext.global
 import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, Timer}
+import cats.implicits._
 import coding.tiny.map.http.routes.TinyMapRoutes
-import coding.tiny.map.repositories.{
-  TinyMapsRepositoryDB,
-  TinyMapsRepositoryRedis,
-  RedisJsonCodecInstances
-}
+import coding.tiny.map.repositories.TinyMapsRepositoryDB
+import coding.tiny.map.services.LiveTinyMapsService
+import dev.profunktor.redis4cats.effect.{Log => R4CLogger}
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
-import cats.implicits._
-import coding.tiny.map.services.LiveTinyMapsService
-import dev.profunktor.redis4cats.effect.{Log => R4CLogger}
+
+import scala.concurrent.ExecutionContext.global
 
 object TinyMapServer {
 

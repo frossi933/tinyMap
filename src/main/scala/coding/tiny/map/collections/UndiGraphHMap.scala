@@ -1,11 +1,11 @@
 package coding.tiny.map.collections
 
-import cats.{Eq, Hash, Monoid, Order}
 import cats.implicits._
+import cats.{Eq, Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.{Adjacency, Edge}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.{HashMap, HashSet, TreeSet}
+import scala.collection.immutable.{HashMap, HashSet}
 
 class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
     private val g: HashMap[N, Adjacency[N, W]]
@@ -21,16 +21,15 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
   def hasNode(node: N): Boolean = g.keys.iterator.contains(node)
 
   def hasEdge(edge: Edge[N, W]): Boolean =
-    g.get(edge.nodeA).exists(adj => adj.contains(edge.nodeB)) &&
-      g.get(edge.nodeB).exists(adj => adj.contains(edge.nodeA))
+    g.get(edge.nodeA).exists(adj => adj.contains(edge.nodeB))
 
-  def insertNode(node: N): Graph[N, W] =
+  def insertNode(node: N): UndiGraphHMap[N, W] =
     if (!hasNode(node))
       new UndiGraphHMap(g.updated(node, Map()))
     else
       this
 
-  def insertEdge(edge: Edge[N, W]): Graph[N, W] =
+  def insertOrUpdateEdge(edge: Edge[N, W]): UndiGraphHMap[N, W] =
     if (!hasEdge(edge)) {
       val adjA    = g.getOrElse(edge.nodeA, Map())
       val adjB    = g.getOrElse(edge.nodeB, Map())
@@ -42,17 +41,24 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
     } else
       this
 
-  def removeNodes(nodes: Vector[N]): Graph[N, W] =
+  def insertOrUpdateEdges(edges: Vector[Edge[N, W]]): UndiGraphHMap[N, W] = {
+    val toInsertOrUpdate = edges.filterNot(hasEdge).distinct
+    toInsertOrUpdate.foldLeft(this) { case (graph, edge) => graph.insertOrUpdateEdge(edge) }
+  }
+
+  def removeNodes(nodes: Vector[N]): UndiGraphHMap[N, W] =
     UndiGraphHMap(edges.filterNot(e => nodes.contains(e.nodeA) || nodes.contains(e.nodeB)))
 
-  def removeEdges(edgesToRemove: Vector[Edge[N, W]]): Graph[N, W] =
-    UndiGraphHMap(edgesToRemove.filterNot(edgesToRemove.contains))
+  def removeEdges(edgesToRemove: Vector[Edge[N, W]]): UndiGraphHMap[N, W] =
+    UndiGraphHMap(
+      edges.filterNot(e => edgesToRemove.contains(e) || edgesToRemove.contains(e.reverse))
+    )
 
   def adjacencyOf(node: N): Adjacency[N, W] = g.getOrElse(node, Map[N, W]())
 
   def neighboursOf(node: N): Vector[N] = adjacencyOf(node).keys.toVector
 
-  def mapEdges[M: Hash, Z: Monoid: Order](f: Edge[N, W] => Edge[M, Z]): Graph[M, Z] =
+  def mapEdges[M: Hash, Z: Monoid: Order](f: Edge[N, W] => Edge[M, Z]): UndiGraphHMap[M, Z] =
     UndiGraphHMap(
       edges.map(f)
     )

@@ -1,14 +1,23 @@
 package coding.tiny.map.http
 
+import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.model.tinyMap.{City, Distance}
 import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, Json, KeyDecoder, KeyEncoder}
 import io.circe.generic.JsonCodec
+import io.circe._
 
 object Requests {
 
-  case class TinyMapCityConnections(city: City, connections: Map[City, Distance])
+  case class TinyMapCityConnections(city: City, connections: Map[City, Distance]) {
+
+    def toEdges: Vector[Edge[City, Distance]] = connections.map { case (cityConn, dist) =>
+      Edge(city, cityConn, dist)
+    }.toVector
+
+  }
+
   object TinyMapCityConnections {
+
     implicit val encodeTMapCityConn: Encoder[TinyMapCityConnections] =
       (a: TinyMapCityConnections) =>
         Json.obj(
@@ -35,7 +44,7 @@ object Requests {
       Encoder.encodeMap[City, Distance]
   }
 
-  @JsonCodec case class CreateRequest(`map`: Vector[TinyMapCityConnections])
+  @JsonCodec case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections])
 
   @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
 
