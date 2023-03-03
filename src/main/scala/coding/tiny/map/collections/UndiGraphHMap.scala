@@ -63,18 +63,19 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
       edges.map(f)
     )
 
-  private def shortestDistDijkstra(n: N, m: N): W = {
+  override def shortestPath(n: N, m: N): Vector[Edge[N, W]] = ???
 
+  override def shortestDistance(n: N, m: N): W = {
     @tailrec
     def shortestDistanceTailRec(
-        n: N,
-        m: N,
+        start: N,
+        end: N,
         fringe: Vector[(W, Vector[N])],
         visited: HashSet[N]
     ): W = {
       fringe match {
         case (dist, path @ (node +: tail)) +: restFringe =>
-          if (node === m)
+          if (node === end)
             dist
           else {
             val newPaths  = adjacencyOf(node)
@@ -84,7 +85,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
               Order[W].lt(d1, d2)
             }
 
-            shortestDistanceTailRec(n, m, newFringe, visited + node)
+            shortestDistanceTailRec(start, end, newFringe, visited + node)
           }
 
         case _ => Monoid[W].empty
@@ -93,10 +94,6 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
 
     shortestDistanceTailRec(n, m, Vector(Monoid[W].empty -> Vector(n)), HashSet.empty[N])
   }
-
-  override def shortestPath(n: N, m: N): Vector[Edge[N, W]] = ???
-
-  override def shortestDistance(n: N, m: N): W = shortestDistDijkstra(n, m)
 
   override def reverse: Graph[N, W] = this
 
