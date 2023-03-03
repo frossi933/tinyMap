@@ -21,7 +21,6 @@ abstract class Graph[N: Eq, W: Monoid: Order] {
   def adjacencyOf(node: N): Adjacency[N, W]
   def neighboursOf(node: N): Vector[N]
 
-  def shortestPath(n: N, m: N): Vector[Edge[N, W]]
   def shortestDistance(n: N, m: N): W
 
   def reverse: Graph[N, W]

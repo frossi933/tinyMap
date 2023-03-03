@@ -27,7 +27,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
   private val httpRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
 
     case GET -> Root =>
-      tinyMapsService.getAll.flatMap(ms => Ok(ms.map(_.edges.map(Road.fromEdge)))) // FIXME
+      tinyMapsService.getAll.flatMap(ms => Ok(ms.map(_.edges.map(Road.fromEdge))))
 
     case req @ POST -> Root =>
       val responseF = for {
@@ -41,7 +41,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
     case GET -> Root / TinyMapIdVar(id) =>
       val responseF = tinyMapsService
         .getById(id)
-        .flatMap(m => Ok(m.edges.map(Road.fromEdge))) // FIXME
+        .flatMap(m => Ok(m.edges.map(Road.fromEdge)))
       recoverExceptions(responseF)
 
     case req @ PUT -> Root / TinyMapIdVar(id) =>
@@ -49,7 +49,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
         updateReqBody <- req.as[CreateOrUpdateRequest]
         tmap          <- tinyMapsService.getById(id)
         updated       <- tinyMapsService.update(tmap, updateReqBody)
-        response      <- Ok(updated.edges.map(Road.fromEdge)) // FIXME
+        response      <- Ok(updated.edges.map(Road.fromEdge))
       } yield response
       recoverExceptions(responseF)
 
@@ -58,7 +58,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
         deleteReqBody <- req.as[TinyMapCityConnections]
         tmap          <- tinyMapsService.getById(id)
         updated       <- tinyMapsService.delete(tmap, deleteReqBody)
-        response      <- Ok(updated.edges.map(Road.fromEdge)) // FIXME
+        response      <- Ok(updated.edges.map(Road.fromEdge))
       } yield response
       recoverExceptions(responseF)
 
@@ -67,7 +67,7 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
         shortestDistReq <- req.as[ShortestDistanceRequest]
         tmap            <- tinyMapsService.getById(id)
         dist             = tinyMapsService.shortestDistance(tmap, shortestDistReq.start, shortestDistReq.end)
-        response        <- Ok(dist) // FIXME
+        response        <- Ok(dist)
       } yield response
       recoverExceptions(responseF)
   }

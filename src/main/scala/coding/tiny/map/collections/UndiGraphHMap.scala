@@ -63,9 +63,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
       edges.map(f)
     )
 
-  override def shortestPath(n: N, m: N): Vector[Edge[N, W]] = ???
-
-  override def shortestDistance(n: N, m: N): W = {
+  def shortestDistance(n: N, m: N): W = {
     @tailrec
     def shortestDistanceTailRec(
         start: N,
@@ -95,7 +93,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
     shortestDistanceTailRec(n, m, Vector(Monoid[W].empty -> Vector(n)), HashSet.empty[N])
   }
 
-  override def reverse: Graph[N, W] = this
+  def reverse: Graph[N, W] = this
 
 }
 
