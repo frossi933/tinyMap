@@ -2,7 +2,7 @@ package coding.tiny.map.services
 
 import cats.effect.Sync
 import cats.implicits._
-import coding.tiny.map.http.Requests
+import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 import coding.tiny.map.repositories.TinyMapsRepository
 import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
@@ -10,7 +10,8 @@ import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
 class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(implicit ev: Sync[F])
     extends TinyMapsService[F] {
 
-  override def create(tmap: TinyMap): F[TinyMapId] = tinyMapsRepository.save(tmap)
+  override def create(mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap] =
+    tinyMapsRepository.save(mapGraph)
 
   override def getAll: F[List[TinyMap]] = tinyMapsRepository.getAll
 
@@ -21,18 +22,22 @@ class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(impli
 
   override def update(
       tmap: TinyMap,
-      cityConnections: Requests.CreateOrUpdateRequest
+      mapGraph: UndiGraphHMap[City, Distance]
   ): F[TinyMap] = {
-    tmap.insertOrUpdateEdges(cityConnections.`map`.flatMap(_.toEdges)).pure[F]
+    val updatedGraph = tmap.graph.updated(mapGraph)
+    tmap.copy(graph = updatedGraph).pure[F]
   }
 
   override def delete(
       tmap: TinyMap,
-      cityConnections: Requests.TinyMapCityConnections
-  ): F[TinyMap] = tmap.removeEdges(cityConnections.toEdges).pure[F]
+      mapGraph: UndiGraphHMap[City, Distance]
+  ): F[TinyMap] = {
+    val updatedGraph = tmap.graph.deleted(mapGraph)
+    tmap.copy(graph = updatedGraph).pure[F]
+  }
 
   def shortestDistance(tmap: TinyMap, start: City, end: City): F[Distance] =
-    tmap.shortestDistance(start, end).pure[F]
+    tmap.graph.shortestDistance(start, end).pure[F]
 }
 
 object LiveTinyMapsService {

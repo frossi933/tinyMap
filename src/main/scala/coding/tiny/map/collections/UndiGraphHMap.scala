@@ -3,6 +3,9 @@ package coding.tiny.map.collections
 import cats.implicits._
 import cats.{Eq, Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.{Adjacency, Edge}
+import coding.tiny.map.model.tinyMap.City
+import eu.timepit.refined.types.string.NonEmptyString
+import io.circe._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.{HashMap, HashSet}
@@ -95,6 +98,9 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
 
   def reverse: Graph[N, W] = this
 
+  override def updated(graph: Graph[N, W]): UndiGraphHMap[N, W] = insertOrUpdateEdges(graph.edges)
+
+  override def deleted(graph: Graph[N, W]): UndiGraphHMap[N, W] = removeEdges(graph.edges)
 }
 
 object UndiGraphHMap {
@@ -109,5 +115,31 @@ object UndiGraphHMap {
       .toSeq
     new UndiGraphHMap(HashMap(mapEntries: _*))
   }
+
+  implicit def graphEncoder[N, W](implicit
+      graphMapEncoder: Encoder[HashMap[N, Adjacency[N, W]]]
+  ): Encoder[UndiGraphHMap[N, W]] = (a: UndiGraphHMap[N, W]) => graphMapEncoder(a.g)
+
+  implicit def graphMapEncoder[N, W](implicit
+      nodeEncoder: KeyEncoder[N],
+      weightEncoder: Encoder[W]
+  ): Encoder[Map[N, Adjacency[N, W]]] =
+    Encoder.encodeMap[N, Adjacency[N, W]]
+
+  implicit val cityKeyEncoder: KeyEncoder[City] = (city: City) => city.name.toString()
+
+  implicit def graphDecoder[N: Hash, W: Monoid: Order](implicit
+      graphMapDecoder: Decoder[HashMap[N, Adjacency[N, W]]]
+  ): Decoder[UndiGraphHMap[N, W]] = (c: HCursor) =>
+    graphMapDecoder.apply(c).map(hmap => new UndiGraphHMap[N, W](hmap))
+
+  implicit def graphMapDecoder[N, W](implicit
+      nodeDecoder: KeyDecoder[N],
+      weightDecoder: Decoder[W]
+  ): Decoder[Map[N, Adjacency[N, W]]] =
+    Decoder.decodeMap[N, Adjacency[N, W]]
+
+  implicit val cityKeyDecoder: KeyDecoder[City] = (key: String) =>
+    NonEmptyString.from(key).map(City(_)).toOption
 
 }

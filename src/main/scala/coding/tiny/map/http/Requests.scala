@@ -1,10 +1,12 @@
 package coding.tiny.map.http
 
+import cats.effect.Sync
 import coding.tiny.map.collections.Graph.Edge
+import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance}
 import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.generic.JsonCodec
 import io.circe._
+import io.circe.generic.JsonCodec
 
 object Requests {
 
@@ -44,7 +46,12 @@ object Requests {
       Encoder.encodeMap[City, Distance]
   }
 
-  @JsonCodec case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections])
+  @JsonCodec case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections]) {
+    def toGraph[F[_]: Sync]: F[UndiGraphHMap[City, Distance]] = Sync[F].delay {
+      val edges = `map`.flatMap(_.toEdges)
+      UndiGraphHMap(edges)
+    }
+  }
 
   @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
 

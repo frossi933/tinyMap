@@ -1,20 +1,16 @@
 package coding.tiny.map.model
 
-import cats.implicits.catsSyntaxApplicativeId
-import cats.{Applicative, Hash, Monoid, Order}
+import cats.{Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.collections.UndiGraphHMap
-import coding.tiny.map.http.Requests.TinyMapCityConnections
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import eu.timepit.refined.types.numeric.NonNegDouble
 import eu.timepit.refined.types.string.NonEmptyString
-import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.refined._
 import io.circe.{Decoder, Encoder}
 import io.estatico.newtype.macros.newtype
-import org.http4s.EntityEncoder
-import org.http4s.circe.jsonEncoderOf
 
 import java.util.UUID
 
@@ -40,7 +36,8 @@ object tinyMap {
     implicit val cityHashInstance: Hash[City] = Hash.by(_.name.toString())
   }
 
-  @JsonCodec case class Road(from: City, to: City, distance: Distance)
+  // TODO remove?
+  case class Road(from: City, to: City, distance: Distance)
   object Road {
     def fromEdge(edge: Edge[City, Distance]): Road = Road(edge.nodeA, edge.nodeB, edge.weight)
 
@@ -52,22 +49,19 @@ object tinyMap {
 
     def fromUUID(uuid: UUID): TinyMapId = TinyMapId(Refined.unsafeApply(uuid.toString))
 
-    implicit val tmapNameDecoder: Decoder[TinyMapId]                      = deriving
-    implicit val tmapNameEncoder: Encoder[TinyMapId]                      = deriving
-    implicit def tmapNameEntityEncoder[F[_]]: EntityEncoder[F, TinyMapId] = jsonEncoderOf
+    implicit val tmapNameDecoder: Decoder[TinyMapId] = deriving
+    implicit val tmapNameEncoder: Encoder[TinyMapId] = deriving
 
   }
 
-  type TinyMap = UndiGraphHMap[City, Distance]
-
+  final case class TinyMap(id: TinyMapId, graph: UndiGraphHMap[City, Distance])
   object TinyMap {
+    implicit def decoderTinyMap(implicit
+        grapDecoder: Decoder[UndiGraphHMap[City, Distance]]
+    ): Decoder[TinyMap] = deriveDecoder
 
-    def apply[F[_]: Applicative](tmap: Vector[TinyMapCityConnections]): F[TinyMap] = {
-      val edges: Vector[Edge[City, Distance]] = tmap.flatMap(cc =>
-        cc.connections.toVector.map { case (city, dist) => Edge(cc.city, city, dist) }
-      )
-
-      UndiGraphHMap(edges).pure[F]
-    }
+    implicit def encoderTinyMap(implicit
+        grapEncoder: Encoder[UndiGraphHMap[City, Distance]]
+    ): Encoder[TinyMap] = deriveEncoder
   }
 }

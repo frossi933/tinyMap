@@ -12,12 +12,15 @@ abstract class Graph[N: Eq, W: Monoid: Order] {
   def hasNode(node: N): Boolean
   def hasEdge(edge: Edge[N, W]): Boolean
 
+  def updated(graph: Graph[N, W]): Graph[N, W]
+  def deleted(graph: Graph[N, W]): Graph[N, W]
+  /* TODO remove?
   def insertNode(node: N): Graph[N, W]
   def insertOrUpdateEdge(edge: Edge[N, W]): Graph[N, W]
 
   def removeNodes(nodes: Vector[N]): Graph[N, W]
   def removeEdges(edges: Vector[Edge[N, W]]): Graph[N, W]
-
+   */
   def adjacencyOf(node: N): Adjacency[N, W]
   def neighboursOf(node: N): Vector[N]
 
