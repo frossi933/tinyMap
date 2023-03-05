@@ -9,7 +9,7 @@ trait TinyMapsService[F[_]] {
 
   def create(mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap]
 
-  def getAll: F[List[TinyMap]]
+  def getAll: F[Vector[TinyMap]]
   def getById(id: TinyMapId): F[TinyMap]
 
   def update(tmap: TinyMap, mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap]

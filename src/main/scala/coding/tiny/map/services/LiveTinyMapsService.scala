@@ -10,13 +10,13 @@ import coding.tiny.map.services.TinyMapsService.{
   TinyMapNotFoundException
 }
 
-class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(implicit ev: Sync[F])
+class LiveTinyMapsService[F[_]: Sync](tinyMapsRepository: TinyMapsRepository[F])
     extends TinyMapsService[F] {
 
   override def create(mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap] =
     tinyMapsRepository.save(mapGraph)
 
-  override def getAll: F[List[TinyMap]] = tinyMapsRepository.getAll
+  override def getAll: F[Vector[TinyMap]] = tinyMapsRepository.getAll
 
   override def getById(id: TinyMapId): F[TinyMap] = tinyMapsRepository.getById(id).flatMap {
     case Some(tmap) => tmap.pure[F]
@@ -48,7 +48,7 @@ class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(impli
 
 object LiveTinyMapsService {
 
-  def apply[F[_]: Sync](tinyMapsRepository: TinyMapsRepository[F]): F[LiveTinyMapsService[F]] = {
+  def make[F[_]: Sync](tinyMapsRepository: TinyMapsRepository[F]): F[LiveTinyMapsService[F]] = {
     Sync[F].delay {
       new LiveTinyMapsService[F](tinyMapsRepository)
     }

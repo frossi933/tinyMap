@@ -1,6 +1,7 @@
 package coding.tiny.map.http
 
-import cats.effect.Sync
+import cats.Applicative
+import cats.implicits.catsSyntaxApplicativeId
 import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance}
@@ -10,7 +11,7 @@ import io.circe.generic.JsonCodec
 
 object Requests {
 
-  case class TinyMapCityConnections(city: City, connections: Map[City, Distance]) {
+  final case class TinyMapCityConnections(city: City, connections: Map[City, Distance]) {
 
     def toEdges: Vector[Edge[City, Distance]] = connections.map { case (cityConn, dist) =>
       Edge(city, cityConn, dist)
@@ -37,23 +38,20 @@ object Requests {
         new TinyMapCityConnections(City(NonEmptyString.unsafeFrom(city)), connections)
       }
 
-    implicit val cityKeyEncoder: KeyEncoder[City]                 = (city: City) => city.name.toString()
-    implicit val cityKeyDecoder: KeyDecoder[City]                 = (key: String) =>
-      NonEmptyString.from(key).toOption.map(nes => City(nes))
     implicit val mapCityDistDecoder: Decoder[Map[City, Distance]] =
       Decoder.decodeMap[City, Distance]
     implicit val mapCityDistEncoder: Encoder[Map[City, Distance]] =
       Encoder.encodeMap[City, Distance]
   }
 
-  @JsonCodec case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections]) {
-    def toGraph[F[_]: Sync]: F[UndiGraphHMap[City, Distance]] = Sync[F].delay {
+  @JsonCodec final case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections]) {
+    def toGraph[F[_]: Applicative]: F[UndiGraphHMap[City, Distance]] = {
       val edges = `map`.flatMap(_.toEdges)
-      UndiGraphHMap.make(edges)
+      UndiGraphHMap.make(edges).pure[F]
     }
   }
 
-  @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
+  @JsonCodec final case class ShortestDistanceRequest(start: City, end: City)
 
-  @JsonCodec case class ShortestDistanceResponse(distance: Distance)
+  @JsonCodec final case class ShortestDistanceResponse(distance: Distance)
 }

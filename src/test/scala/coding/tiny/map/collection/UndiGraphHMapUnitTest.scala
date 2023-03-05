@@ -18,7 +18,7 @@ class UndiGraphHMapUnitTest extends AnyFlatSpec {
     assert(graph.edges.isEmpty)
   }
 
-  "Make factory method" should "create an undirected graph containing all the edges and nodes present in the argument list and their reverse" in {
+  "Make factory method" should "create an undirected graph containing all the edges and nodes present in the argument list and their opposites" in {
 
     val edges = Vector(
       Edge("A", "B", 10),
@@ -31,6 +31,54 @@ class UndiGraphHMapUnitTest extends AnyFlatSpec {
     assert(graph.nodes.sorted === Vector("A", "B", "C", "D"))
     assert(edges.forall(graph.edges.contains))
     assert(edges.map(_.reverse).forall(graph.edges.contains))
+  }
+
+  "Updated method" should "add the new edges and their opposites, and not delete any existent edges" in {
+
+    val edges = Vector(
+      Edge("A", "B", 10),
+      Edge("C", "B", 10),
+      Edge("A", "D", 10)
+    )
+    val graph = UndiGraphHMap.make[String, Int](edges)
+
+    val edgesToAdd = Vector(
+      Edge("D", "E", 20),
+      Edge("E", "B", 20)
+    )
+    val graphToAdd = UndiGraphHMap.make[String, Int](edgesToAdd)
+
+    val updated = graph.updated(graphToAdd)
+
+    assert(updated.nodes.sorted === Vector("A", "B", "C", "D", "E"))
+    assert(edges.forall(updated.edges.contains))
+    assert(edges.map(_.reverse).forall(updated.edges.contains))
+    assert(edgesToAdd.forall(updated.edges.contains))
+    assert(edgesToAdd.map(_.reverse).forall(updated.edges.contains))
+  }
+
+  "Updated method" should "overwrite weight of already existent edges" in {
+
+    val edges = Vector(
+      Edge("A", "B", 10),
+      Edge("C", "B", 10),
+      Edge("A", "D", 10)
+    )
+    val graph = UndiGraphHMap.make[String, Int](edges)
+
+    val edgesToUpdate = Vector(
+      Edge("A", "B", 20),
+      Edge("B", "C", 30)
+    )
+    val graphToUpdate = UndiGraphHMap.make[String, Int](edgesToUpdate)
+
+    val updated = graph.updated(graphToUpdate)
+
+    assert(updated.nodes.sorted === Vector("A", "B", "C", "D"))
+    assert(edgesToUpdate.forall(updated.edges.contains))
+    assert(edgesToUpdate.map(_.reverse).forall(updated.edges.contains))
+    assert(!updated.hasEdge(Edge("A", "B", 10)))
+    assert(!updated.hasEdge(Edge("C", "B", 10)))
   }
 
   "Shortest distance method" should "return None if start and end are not connected" in {

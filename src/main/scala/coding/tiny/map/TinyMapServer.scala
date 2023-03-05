@@ -23,8 +23,8 @@ object TinyMapServer {
       T: Timer[F]
   ): F[fs2.Stream[F, ExitCode]] = {
     for {
-      mapsRepo    <- TinyMapsRepositoryRedis(appResources.redis)
-      mapsService <- LiveTinyMapsService(mapsRepo)
+      mapsRepo    <- TinyMapsRepositoryRedis.make(appResources.redis)
+      mapsService <- LiveTinyMapsService.make(mapsRepo)
       mapRoutes    = TinyMapRoutes(mapsService).routes
       httpApp      = Router("/" -> mapRoutes).orNotFound
       finalHttpApp = Logger.httpApp(logHeaders = true, logBody = true)(httpApp)

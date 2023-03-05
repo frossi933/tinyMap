@@ -19,10 +19,7 @@ object CirceToRedisCodecs {
   implicit def circeSplitEpiStringTo[T](implicit tCirceCodec: circe.Codec[T]): SplitEpiStringTo[T] =
     new SplitEpiStringTo[T] {
       override val stringSplitEpi: SplitEpi[String, T] = SplitEpi(
-        s =>
-          parse(s).toOption
-            .flatMap(json => tCirceCodec.decodeJson(json).toOption)
-            .get, // FIXME unsafe
+        s => parse(s).toOption.flatMap(json => tCirceCodec.decodeJson(json).toOption).get,
         t => tCirceCodec.apply(t).toString()
       )
     }

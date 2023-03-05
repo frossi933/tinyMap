@@ -9,7 +9,7 @@ trait TinyMapsRepository[F[_]] {
 
   def update(tinyMap: TinyMap): F[TinyMap]
 
-  def getAll: F[List[TinyMap]]
+  def getAll: F[Vector[TinyMap]]
 
   def getById(name: TinyMapId): F[Option[TinyMap]]
 

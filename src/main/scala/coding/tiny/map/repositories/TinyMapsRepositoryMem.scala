@@ -6,21 +6,20 @@ import cats.implicits._
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 
-import java.util.UUID
 import scala.collection.mutable
 
 class TinyMapsRepositoryMem[F[_]: Applicative] extends TinyMapsRepository[F] {
   var tmaps: mutable.HashMap[TinyMapId, UndiGraphHMap[City, Distance]] =
     mutable.HashMap[TinyMapId, UndiGraphHMap[City, Distance]]()
 
-  override def getAll: F[List[TinyMap]] =
-    tmaps.toList.map { case (id, graph) => TinyMap(id, graph) }.pure[F]
+  override def getAll: F[Vector[TinyMap]] =
+    tmaps.toVector.map { case (id, graph) => TinyMap(id, graph) }.pure[F]
 
   override def getById(id: TinyMapId): F[Option[TinyMap]] =
     tmaps(id).some.map(g => TinyMap(id, g)).pure[F]
 
   override def save(mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap] = {
-    val id = TinyMapId.fromUUID(UUID.randomUUID())
+    val id = TinyMapId.make
     tmaps = tmaps.addOne(id -> mapGraph)
     TinyMap(id, mapGraph).pure[F]
   }
@@ -33,7 +32,7 @@ class TinyMapsRepositoryMem[F[_]: Applicative] extends TinyMapsRepository[F] {
 
 object TinyMapsRepositoryMem {
 
-  def apply[F[_]: Sync](): F[TinyMapsRepositoryMem[F]] = Sync[F].delay {
+  def make[F[_]: Sync](): F[TinyMapsRepositoryMem[F]] = Sync[F].delay {
     new TinyMapsRepositoryMem[F]
   }
 }

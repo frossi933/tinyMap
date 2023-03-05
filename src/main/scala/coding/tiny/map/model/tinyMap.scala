@@ -1,7 +1,6 @@
 package coding.tiny.map.model
 
 import cats.{Hash, Monoid, Order}
-import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.utils.RedisJsonCodec
 import eu.timepit.refined.api.Refined
@@ -9,16 +8,16 @@ import eu.timepit.refined.string.Uuid
 import eu.timepit.refined.types.numeric.NonNegDouble
 import eu.timepit.refined.types.string.NonEmptyString
 import io.circe
+import io.circe._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.refined._
-import io.circe._
 import io.estatico.newtype.macros.newtype
 
 import java.util.UUID
 
 object tinyMap {
 
-  @newtype case class Distance(distance: NonNegDouble)
+  @newtype final case class Distance(distance: NonNegDouble)
   object Distance {
     implicit val distDecoder: Decoder[Distance] = deriving
     implicit val distEncoder: Encoder[Distance] = deriving
@@ -30,10 +29,11 @@ object tinyMap {
     implicit val distOrderInstance: Order[Distance]   = Order.by(_.distance.value)
   }
 
-  @newtype case class City(name: NonEmptyString)
+  @newtype final case class City(name: NonEmptyString)
   object City {
-    implicit val cityDecoder: Decoder[City]       = deriving
-    implicit val cityEncoder: Encoder[City]       = deriving
+    implicit val cityDecoder: Decoder[City] = deriving
+    implicit val cityEncoder: Encoder[City] = deriving
+
     implicit val cityKeyEncoder: KeyEncoder[City] = (city: City) => city.name.toString()
     implicit val cityKeyDecoder: KeyDecoder[City] = (key: String) =>
       NonEmptyString.from(key).map(City(_)).toOption
@@ -41,20 +41,13 @@ object tinyMap {
     implicit val cityHashInstance: Hash[City] = Hash.by(_.name.toString())
   }
 
-  // TODO remove?
-  case class Road(from: City, to: City, distance: Distance)
-  object Road {
-    def fromEdge(edge: Edge[City, Distance]): Road = Road(edge.nodeA, edge.nodeB, edge.weight)
-
-    def toEdge(road: Road): Edge[City, Distance] = Edge(road.from, road.to, road.distance)
-  }
-
-  @newtype case class TinyMapId(id: String Refined Uuid)
+  @newtype final case class TinyMapId(id: String Refined Uuid)
   object TinyMapId {
 
-    def fromUUID(uuid: UUID): TinyMapId = TinyMapId(Refined.unsafeApply(uuid.toString))
+    def make: TinyMapId = TinyMapId(Refined.unsafeApply(UUID.randomUUID().toString))
 
-    val allUuids: TinyMapId                        = TinyMapId(Refined.unsafeApply("*-*-*-*-*"))
+    val allUuids: TinyMapId = TinyMapId(Refined.unsafeApply("*-*-*-*-*"))
+
     implicit val tmapIdDecoder: Decoder[TinyMapId] = deriving
     implicit val tmapIdEncoder: Encoder[TinyMapId] = deriving
     implicit val tmapIdCodec: Codec[TinyMapId]     = Codec.from(tmapIdDecoder, tmapIdEncoder)

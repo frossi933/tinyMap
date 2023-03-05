@@ -14,23 +14,22 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
     private val g: HashMap[N, Adjacency[N, W]]
 ) extends Graph[N, W] {
 
-  val nodes: Vector[N]          = g.keys.toVector
+  val nodes: Vector[N] = g.keys.toVector
+
   val edges: Vector[Edge[N, W]] = g.flatMap { case (n, adj) =>
     adj.map(a => Edge(n, a._1, a._2))
   }.toVector
 
   def isEmpty: Boolean = g.isEmpty
 
-  def hasNode(node: N): Boolean = g.keys.iterator.contains(node)
+  def hasNode(node: N): Boolean = g.contains(node)
 
   def hasEdge(edge: Edge[N, W]): Boolean =
-    g.get(edge.nodeA).exists(adj => adj.contains(edge.nodeB))
+    g.get(edge.nodeA).exists(adj => adj.get(edge.nodeB).exists(_ === edge.weight))
 
-  def insertNode(node: N): UndiGraphHMap[N, W] =
-    if (!hasNode(node))
-      new UndiGraphHMap(g.updated(node, Map()))
-    else
-      this
+  def updated(graph: Graph[N, W]): UndiGraphHMap[N, W] = insertOrUpdateEdges(graph.edges)
+
+  def deleted(graph: Graph[N, W]): UndiGraphHMap[N, W] = removeEdges(graph.edges)
 
   def insertOrUpdateEdge(edge: Edge[N, W]): UndiGraphHMap[N, W] =
     if (!hasEdge(edge)) {
@@ -49,9 +48,6 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
     toInsertOrUpdate.foldLeft(this) { case (graph, edge) => graph.insertOrUpdateEdge(edge) }
   }
 
-  def removeNodes(nodes: Vector[N]): UndiGraphHMap[N, W] =
-    UndiGraphHMap.make(edges.filterNot(e => nodes.contains(e.nodeA) || nodes.contains(e.nodeB)))
-
   def removeEdges(edgesToRemove: Vector[Edge[N, W]]): UndiGraphHMap[N, W] =
     UndiGraphHMap.make(
       edges.filterNot(e => edgesToRemove.contains(e) || edgesToRemove.contains(e.reverse))
@@ -60,9 +56,6 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
   def adjacencyOf(node: N): Adjacency[N, W] = g.getOrElse(node, Map[N, W]())
 
   def neighboursOf(node: N): Vector[N] = adjacencyOf(node).keys.toVector
-
-  def mapEdges[M: Hash, Z: Monoid: Order](f: Edge[N, W] => Edge[M, Z]): UndiGraphHMap[M, Z] =
-    UndiGraphHMap.make(edges.map(f))
 
   def shortestDistance(n: N, m: N): Option[W] = {
     @tailrec
@@ -98,10 +91,6 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
   }
 
   def reverse: Graph[N, W] = this
-
-  override def updated(graph: Graph[N, W]): UndiGraphHMap[N, W] = insertOrUpdateEdges(graph.edges)
-
-  override def deleted(graph: Graph[N, W]): UndiGraphHMap[N, W] = removeEdges(graph.edges)
 }
 
 object UndiGraphHMap {
