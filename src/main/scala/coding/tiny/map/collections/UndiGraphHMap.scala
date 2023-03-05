@@ -3,9 +3,9 @@ package coding.tiny.map.collections
 import cats.implicits._
 import cats.{Eq, Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.{Adjacency, Edge}
-import coding.tiny.map.model.tinyMap.City
-import eu.timepit.refined.types.string.NonEmptyString
-import io.circe._
+import io.circe
+import io.circe.Decoder.Result
+import io.circe.{Decoder, Encoder, HCursor, Json, Codec => CirceCodec}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.{HashMap, HashSet}
@@ -116,30 +116,20 @@ object UndiGraphHMap {
     new UndiGraphHMap(HashMap(mapEntries: _*))
   }
 
-  implicit def graphEncoder[N, W](implicit
-      graphMapEncoder: Encoder[HashMap[N, Adjacency[N, W]]]
-  ): Encoder[UndiGraphHMap[N, W]] = (a: UndiGraphHMap[N, W]) => graphMapEncoder(a.g)
+  implicit def undiGraphCirceCodec[N: Hash, W: Monoid: Order](implicit
+      graphMapCirceCodec: circe.Codec[HashMap[N, Adjacency[N, W]]]
+  ): circe.Codec[UndiGraphHMap[N, W]] = new circe.Codec[UndiGraphHMap[N, W]] {
 
-  implicit def graphMapEncoder[N, W](implicit
-      nodeEncoder: KeyEncoder[N],
-      weightEncoder: Encoder[W]
-  ): Encoder[Map[N, Adjacency[N, W]]] =
-    Encoder.encodeMap[N, Adjacency[N, W]]
+    override def apply(a: UndiGraphHMap[N, W]): Json = graphMapCirceCodec(a.g)
 
-  implicit val cityKeyEncoder: KeyEncoder[City] = (city: City) => city.name.toString()
+    override def apply(c: HCursor): Result[UndiGraphHMap[N, W]] =
+      graphMapCirceCodec.apply(c).map(new UndiGraphHMap[N, W](_))
+  }
 
-  implicit def graphDecoder[N: Hash, W: Monoid: Order](implicit
-      graphMapDecoder: Decoder[HashMap[N, Adjacency[N, W]]]
-  ): Decoder[UndiGraphHMap[N, W]] = (c: HCursor) =>
-    graphMapDecoder.apply(c).map(hmap => new UndiGraphHMap[N, W](hmap))
-
-  implicit def graphMapDecoder[N, W](implicit
-      nodeDecoder: KeyDecoder[N],
-      weightDecoder: Decoder[W]
-  ): Decoder[Map[N, Adjacency[N, W]]] =
-    Decoder.decodeMap[N, Adjacency[N, W]]
-
-  implicit val cityKeyDecoder: KeyDecoder[City] = (key: String) =>
-    NonEmptyString.from(key).map(City(_)).toOption
+  implicit def hashMapAdjCirceCodec[N, W](implicit
+      hmapDecoder: Decoder[HashMap[N, Adjacency[N, W]]],
+      hampEncoder: Encoder[HashMap[N, Adjacency[N, W]]]
+  ): CirceCodec[HashMap[N, Adjacency[N, W]]] =
+    CirceCodec.from(hmapDecoder, hampEncoder)
 
 }

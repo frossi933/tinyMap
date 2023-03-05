@@ -3,13 +3,15 @@ package coding.tiny.map.model
 import cats.{Hash, Monoid, Order}
 import coding.tiny.map.collections.Graph.Edge
 import coding.tiny.map.collections.UndiGraphHMap
+import coding.tiny.map.utils.RedisJsonCodec
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Uuid
 import eu.timepit.refined.types.numeric.NonNegDouble
 import eu.timepit.refined.types.string.NonEmptyString
+import io.circe
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.refined._
-import io.circe.{Decoder, Encoder}
+import io.circe._
 import io.estatico.newtype.macros.newtype
 
 import java.util.UUID
@@ -30,8 +32,11 @@ object tinyMap {
 
   @newtype case class City(name: NonEmptyString)
   object City {
-    implicit val cityDecoder: Decoder[City] = deriving
-    implicit val cityEncoder: Encoder[City] = deriving
+    implicit val cityDecoder: Decoder[City]       = deriving
+    implicit val cityEncoder: Encoder[City]       = deriving
+    implicit val cityKeyEncoder: KeyEncoder[City] = (city: City) => city.name.toString()
+    implicit val cityKeyDecoder: KeyDecoder[City] = (key: String) =>
+      NonEmptyString.from(key).map(City(_)).toOption
 
     implicit val cityHashInstance: Hash[City] = Hash.by(_.name.toString())
   }
@@ -49,19 +54,22 @@ object tinyMap {
 
     def fromUUID(uuid: UUID): TinyMapId = TinyMapId(Refined.unsafeApply(uuid.toString))
 
-    implicit val tmapNameDecoder: Decoder[TinyMapId] = deriving
-    implicit val tmapNameEncoder: Encoder[TinyMapId] = deriving
-
+    val allUuids: TinyMapId                        = TinyMapId(Refined.unsafeApply("*-*-*-*-*"))
+    implicit val tmapIdDecoder: Decoder[TinyMapId] = deriving
+    implicit val tmapIdEncoder: Encoder[TinyMapId] = deriving
+    implicit val tmapIdCodec: Codec[TinyMapId]     = Codec.from(tmapIdDecoder, tmapIdEncoder)
   }
 
   final case class TinyMap(id: TinyMapId, graph: UndiGraphHMap[City, Distance])
   object TinyMap {
-    implicit def decoderTinyMap(implicit
-        grapDecoder: Decoder[UndiGraphHMap[City, Distance]]
-    ): Decoder[TinyMap] = deriveDecoder
 
-    implicit def encoderTinyMap(implicit
-        grapEncoder: Encoder[UndiGraphHMap[City, Distance]]
-    ): Encoder[TinyMap] = deriveEncoder
+    import coding.tiny.map.collections.UndiGraphHMap._
+    import coding.tiny.map.utils.CirceToRedisCodecs._
+
+    implicit val decoderTinyMap: circe.Decoder[TinyMap] = deriveDecoder
+    implicit val encoderTinyMap: circe.Encoder[TinyMap] = deriveEncoder
+
+    val redisJsonCodec: RedisJsonCodec[TinyMapId, UndiGraphHMap[City, Distance]] =
+      implicitly[RedisJsonCodec[TinyMapId, UndiGraphHMap[City, Distance]]]
   }
 }

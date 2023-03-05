@@ -2,7 +2,6 @@ package coding.tiny.map.http.routes
 
 import cats.effect._
 import cats.implicits._
-import coding.tiny.map.collections.UndiGraphHMap._
 import coding.tiny.map.http.Requests.{CreateOrUpdateRequest, ShortestDistanceRequest}
 import coding.tiny.map.http.routes.Vars.TinyMapIdVar
 import coding.tiny.map.model.tinyMap.Distance._

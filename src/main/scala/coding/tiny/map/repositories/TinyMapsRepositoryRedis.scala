@@ -5,12 +5,7 @@ import cats.implicits._
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 import dev.profunktor.redis4cats.RedisCommands
-import dev.profunktor.redis4cats.codecs.Codecs
-import dev.profunktor.redis4cats.codecs.splits.SplitEpi
-import dev.profunktor.redis4cats.data.RedisCodec
 import dev.profunktor.redis4cats.effect.{Log => R4CLogger}
-import io.circe.parser._
-import io.circe.{Codec => CirceCodec}
 
 import java.util.UUID
 
@@ -40,33 +35,6 @@ class TinyMapsRepositoryRedis[F[_]](
 }
 
 object TinyMapsRepositoryRedis {
-
-  trait SplitEpiStringTo[T] {
-    val stringSplitEpi: SplitEpi[String, T]
-  }
-
-  trait RedisJsonCodec[K, T] {
-    val redisCodec: RedisCodec[K, T]
-  }
-
-  implicit def circeSplitEpiStringTo[T](implicit tCirceCodec: CirceCodec[T]): SplitEpiStringTo[T] =
-    new SplitEpiStringTo[T] {
-      override val stringSplitEpi: SplitEpi[String, T] = SplitEpi(
-        s =>
-          parse(s).toOption
-            .flatMap(json => tCirceCodec.decodeJson(json).toOption)
-            .get, // FIXME unsafe
-        t => tCirceCodec.apply(t).toString()
-      )
-    }
-
-  implicit def circeRedisJsonCodec[K, V](implicit
-      stringToK: SplitEpiStringTo[K],
-      stringToV: SplitEpiStringTo[V]
-  ): RedisJsonCodec[K, V] = new RedisJsonCodec[K, V] {
-    override val redisCodec: RedisCodec[K, V] =
-      Codecs.derive(RedisCodec.Utf8, stringToK.stringSplitEpi, stringToV.stringSplitEpi)
-  }
 
   def apply[F[_]: BracketThrow: Concurrent: ContextShift: R4CLogger](
       redisCommands: RedisCommands[F, TinyMapId, UndiGraphHMap[City, Distance]]
