@@ -2,7 +2,7 @@ package coding.tiny.map.repositories
 
 import cats.Applicative
 import cats.effect.Sync
-import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
+import cats.implicits._
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 
@@ -24,9 +24,16 @@ class TinyMapsRepositoryMem[F[_]: Applicative] extends TinyMapsRepository[F] {
     tmaps = tmaps.addOne(id -> mapGraph)
     TinyMap(id, mapGraph).pure[F]
   }
+
+  override def update(tmap: TinyMap): F[TinyMap] = {
+    tmaps = tmaps.addOne(tmap.id -> tmap.graph)
+    tmap.pure[F]
+  }
 }
 
 object TinyMapsRepositoryMem {
 
-  def apply[F[_]: Sync](): F[TinyMapsRepositoryMem[F]] = new TinyMapsRepositoryMem[F].pure
+  def apply[F[_]: Sync](): F[TinyMapsRepositoryMem[F]] = Sync[F].delay {
+    new TinyMapsRepositoryMem[F]
+  }
 }

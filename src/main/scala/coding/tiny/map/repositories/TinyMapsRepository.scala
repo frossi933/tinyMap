@@ -7,6 +7,8 @@ trait TinyMapsRepository[F[_]] {
 
   def save(mapGraph: UndiGraphHMap[City, Distance]): F[TinyMap]
 
+  def update(tinyMap: TinyMap): F[TinyMap]
+
   def getAll: F[List[TinyMap]]
 
   def getById(name: TinyMapId): F[Option[TinyMap]]
