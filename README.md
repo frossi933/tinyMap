@@ -1,6 +1,11 @@
 # Tiny Map - The shortest distance - Coding exercise
 ***
 
+Tiny Maps are modeled as Undirected Weighted Graphs where cities are nodes, roads are edges and distances are weights. 
+For each new road added, the graph creates two edges, one for each direction.
+Tiny Maps are stored in a local running instance of Redis
+
+
 ## How To Run
 
 ### Setup Redis
@@ -9,6 +14,11 @@ Install and run redis-server on your machine following the [official instruction
 ### Run
 ```
 $> sbt run
+```
+
+### Test
+```
+$> sbt test
 ```
 
 ## Dependencies 
