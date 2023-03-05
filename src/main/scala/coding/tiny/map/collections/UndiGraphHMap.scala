@@ -50,10 +50,10 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
   }
 
   def removeNodes(nodes: Vector[N]): UndiGraphHMap[N, W] =
-    UndiGraphHMap(edges.filterNot(e => nodes.contains(e.nodeA) || nodes.contains(e.nodeB)))
+    UndiGraphHMap.make(edges.filterNot(e => nodes.contains(e.nodeA) || nodes.contains(e.nodeB)))
 
   def removeEdges(edgesToRemove: Vector[Edge[N, W]]): UndiGraphHMap[N, W] =
-    UndiGraphHMap(
+    UndiGraphHMap.make(
       edges.filterNot(e => edgesToRemove.contains(e) || edgesToRemove.contains(e.reverse))
     )
 
@@ -62,9 +62,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
   def neighboursOf(node: N): Vector[N] = adjacencyOf(node).keys.toVector
 
   def mapEdges[M: Hash, Z: Monoid: Order](f: Edge[N, W] => Edge[M, Z]): UndiGraphHMap[M, Z] =
-    UndiGraphHMap(
-      edges.map(f)
-    )
+    UndiGraphHMap.make(edges.map(f))
 
   def shortestDistance(n: N, m: N): Option[W] = {
     @tailrec
@@ -93,7 +91,10 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
       }
     }
 
-    shortestDistanceTailRec(n, m, Vector(Monoid[W].empty -> Vector(n)), HashSet.empty[N])
+    if (!hasNode(n) || !hasNode(m))
+      none
+    else
+      shortestDistanceTailRec(n, m, Vector(Monoid[W].empty -> Vector(n)), HashSet.empty[N])
   }
 
   def reverse: Graph[N, W] = this
@@ -105,7 +106,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
 
 object UndiGraphHMap {
 
-  def apply[N: Hash: Eq, W: Monoid: Order](edges: Vector[Edge[N, W]]): UndiGraphHMap[N, W] = {
+  def make[N: Hash: Eq, W: Monoid: Order](edges: Vector[Edge[N, W]]): UndiGraphHMap[N, W] = {
     val edgesRev   = edges.map(e => Edge(e.nodeB, e.nodeA, e.weight))
     val mapEntries = edges
       .concat(edgesRev)

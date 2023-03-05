@@ -19,6 +19,7 @@ This project is built using the following libraries
 * [Newtype](https://github.com/estatico/scala-newtype)
 * [Refined](https://github.com/fthomas/refined)
 * [Redis4Cats](https://github.com/profunktor/redis4cats)
+* [ScalaTest](https://github.com/scalatest/scalatest)
 
 ## REST API
 

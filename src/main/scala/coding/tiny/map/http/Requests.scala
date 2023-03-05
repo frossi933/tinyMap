@@ -49,7 +49,7 @@ object Requests {
   @JsonCodec case class CreateOrUpdateRequest(`map`: Vector[TinyMapCityConnections]) {
     def toGraph[F[_]: Sync]: F[UndiGraphHMap[City, Distance]] = Sync[F].delay {
       val edges = `map`.flatMap(_.toEdges)
-      UndiGraphHMap(edges)
+      UndiGraphHMap.make(edges)
     }
   }
 

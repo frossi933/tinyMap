@@ -5,6 +5,7 @@ val KindProjectorVersion = "0.13.0"
 val NewTypeVersion       = "0.4.4"
 val RefinedVersion       = "0.9.28"
 val Redis4CatsVersion    = "0.14.0"
+val ScalaTestVersion     = "3.2.15"
 
 lazy val root = (project in file("."))
   .settings(
@@ -24,7 +25,8 @@ lazy val root = (project in file("."))
       "io.estatico"    %% "newtype"             % NewTypeVersion,
       "eu.timepit"     %% "refined"             % RefinedVersion,
       "dev.profunktor" %% "redis4cats-effects"  % Redis4CatsVersion,
-      "dev.profunktor" %% "redis4cats-log4cats" % Redis4CatsVersion
+      "dev.profunktor" %% "redis4cats-log4cats" % Redis4CatsVersion,
+      "org.scalatest"  %% "scalatest"           % ScalaTestVersion % "test"
     ),
     addCompilerPlugin(
       "org.typelevel" %% "kind-projector" % KindProjectorVersion cross CrossVersion.full
