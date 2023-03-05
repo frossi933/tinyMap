@@ -55,4 +55,5 @@ object Requests {
 
   @JsonCodec case class ShortestDistanceRequest(start: City, end: City)
 
+  @JsonCodec case class ShortestDistanceResponse(distance: Distance)
 }

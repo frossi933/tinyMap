@@ -2,7 +2,11 @@ package coding.tiny.map.http.routes
 
 import cats.effect._
 import cats.implicits._
-import coding.tiny.map.http.Requests.{CreateOrUpdateRequest, ShortestDistanceRequest}
+import coding.tiny.map.http.Requests.{
+  CreateOrUpdateRequest,
+  ShortestDistanceRequest,
+  ShortestDistanceResponse
+}
 import coding.tiny.map.http.routes.Vars.TinyMapIdVar
 import coding.tiny.map.model.tinyMap.Distance._
 import coding.tiny.map.model.tinyMap.TinyMap._
@@ -64,8 +68,8 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
       val responseF = for {
         shortestDistReq <- req.as[ShortestDistanceRequest]
         tmap            <- tinyMapsService.getById(id)
-        dist             = tinyMapsService.shortestDistance(tmap, shortestDistReq.start, shortestDistReq.end)
-        response        <- Ok(dist)
+        dist            <- tinyMapsService.shortestDistance(tmap, shortestDistReq.start, shortestDistReq.end)
+        response        <- Ok(ShortestDistanceResponse(dist))
       } yield response
       recoverExceptions(responseF)
   }
