@@ -24,16 +24,16 @@ class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(impli
       tmap: TinyMap,
       mapGraph: UndiGraphHMap[City, Distance]
   ): F[TinyMap] = {
-    val updatedGraph = tmap.graph.updated(mapGraph)
-    tmap.copy(graph = updatedGraph).pure[F]
+    val updatedTmap = tmap.copy(graph = tmap.graph.updated(mapGraph))
+    tinyMapsRepository.update(updatedTmap)
   }
 
   override def delete(
       tmap: TinyMap,
       mapGraph: UndiGraphHMap[City, Distance]
   ): F[TinyMap] = {
-    val updatedGraph = tmap.graph.deleted(mapGraph)
-    tmap.copy(graph = updatedGraph).pure[F]
+    val updatedTmap = tmap.copy(graph = tmap.graph.deleted(mapGraph))
+    tinyMapsRepository.update(updatedTmap)
   }
 
   def shortestDistance(tmap: TinyMap, start: City, end: City): F[Distance] =
