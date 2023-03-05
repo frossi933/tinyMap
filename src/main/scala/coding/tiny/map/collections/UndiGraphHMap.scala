@@ -66,18 +66,18 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
       edges.map(f)
     )
 
-  def shortestDistance(n: N, m: N): W = {
+  def shortestDistance(n: N, m: N): Option[W] = {
     @tailrec
     def shortestDistanceTailRec(
         start: N,
         end: N,
         fringe: Vector[(W, Vector[N])],
         visited: HashSet[N]
-    ): W = {
+    ): Option[W] = {
       fringe match {
         case (dist, path @ (node +: tail)) +: restFringe =>
           if (node === end)
-            dist
+            dist.some
           else {
             val newPaths  = adjacencyOf(node)
               .filter { case (nextNode, _) => !visited.contains(nextNode) }
@@ -89,7 +89,7 @@ class UndiGraphHMap[N: Hash, W: Monoid: Order] private (
             shortestDistanceTailRec(start, end, newFringe, visited + node)
           }
 
-        case _ => Monoid[W].empty
+        case _ => none
       }
     }
 

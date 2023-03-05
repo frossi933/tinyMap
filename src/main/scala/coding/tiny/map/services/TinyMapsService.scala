@@ -20,7 +20,8 @@ trait TinyMapsService[F[_]] {
 
 object TinyMapsService {
 
-  trait TinyMapsException                            extends NoStackTrace
-  case class TinyMapNotFoundException(id: TinyMapId) extends TinyMapsException
+  trait TinyMapsException                                      extends NoStackTrace
+  case class TinyMapNotFoundException(id: TinyMapId)           extends TinyMapsException
+  case class ShortestDistanceException(start: City, end: City) extends TinyMapsException
 
 }

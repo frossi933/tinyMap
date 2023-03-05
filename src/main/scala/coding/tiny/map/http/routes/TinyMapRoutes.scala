@@ -11,7 +11,10 @@ import coding.tiny.map.http.routes.Vars.TinyMapIdVar
 import coding.tiny.map.model.tinyMap.Distance._
 import coding.tiny.map.model.tinyMap.TinyMap._
 import coding.tiny.map.services.TinyMapsService
-import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
+import coding.tiny.map.services.TinyMapsService.{
+  ShortestDistanceException,
+  TinyMapNotFoundException
+}
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.Router
@@ -75,8 +78,12 @@ case class TinyMapRoutes[F[_]: Sync](tinyMapsService: TinyMapsService[F]) {
   }
 
   private def recoverExceptions(result: F[Response[F]]) = result.recoverWith {
-    case TinyMapNotFoundException(id) =>
-      NotFound()
+    case TinyMapNotFoundException(id)          =>
+      NotFound(s"Tiny Map with id: $id doesn't exist")
+    case ShortestDistanceException(start, end) =>
+      BadRequest(
+        s"It's not possible to calculate the shortest distance between $start and $end. Tiny Maps should represent connected graphs."
+      )
   }
 
   val routes: HttpRoutes[F] = Router(

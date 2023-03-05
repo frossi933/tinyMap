@@ -5,7 +5,10 @@ import cats.implicits._
 import coding.tiny.map.collections.UndiGraphHMap
 import coding.tiny.map.model.tinyMap.{City, Distance, TinyMap, TinyMapId}
 import coding.tiny.map.repositories.TinyMapsRepository
-import coding.tiny.map.services.TinyMapsService.TinyMapNotFoundException
+import coding.tiny.map.services.TinyMapsService.{
+  ShortestDistanceException,
+  TinyMapNotFoundException
+}
 
 class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(implicit ev: Sync[F])
     extends TinyMapsService[F] {
@@ -37,7 +40,10 @@ class LiveTinyMapsService[F[_]](tinyMapsRepository: TinyMapsRepository[F])(impli
   }
 
   def shortestDistance(tmap: TinyMap, start: City, end: City): F[Distance] =
-    tmap.graph.shortestDistance(start, end).pure[F]
+    tmap.graph.shortestDistance(start, end) match {
+      case Some(dist) => dist.pure[F]
+      case None       => ShortestDistanceException(start, end).raiseError[F, Distance]
+    }
 }
 
 object LiveTinyMapsService {
